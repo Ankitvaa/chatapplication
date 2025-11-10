@@ -1,0 +1,280 @@
+/*
+  DISCORD THEME STYLES
+  Color Palette:
+  - Background (Main): #36393f (Dark Slate)
+  - Background (Secondary/Sidebar/Input): #2f3136 (Darker Grey)
+  - Text: #dcddde (Off-white)
+  - Accent (Discord Purple/Blue): #5865f2
+  - Received Message Bubble: #40444b (Mid Grey)
+  - Divider: #202225 (Near Black)
+*/
+
+.app-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* Set a dark background for the whole application */
+    background-color: #36393f;
+    color: #dcddde;
+    /* Default text color */
+}
+
+.chat-layout {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+.chat-list-container {
+    width: 300px;
+    /* Darker background for the channel/chat list */
+    background-color: #2f3136;
+    /* Subtle, darker divider */
+    border-right: 1px solid #202225;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.chat-window-container {
+    flex: 1;
+    /* Main chat background */
+    background-color: #36393f;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.no-chat-selected {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #99aab5;
+    /* Light grey hint text */
+    font-size: 1.2rem;
+    background-color: #36393f;
+}
+
+/* Chat Window Styles */
+.chat-window {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-header {
+    padding: 1rem;
+    /* Header matches the chat list background */
+    background-color: #2f3136;
+    border-bottom: 1px solid #202225;
+    max-width: 1000px;
+}
+
+.chat-header h3 {
+    margin: 0;
+    color: #dcddde;
+    /* White text */
+    font-weight: 600;
+}
+
+.messages-container {
+    flex: 1;
+    position: relative;
+    background-color: #36393f;
+    max-width: 1000px;
+    overflow: hidden;
+}
+
+.messages-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scroll-behavior: smooth;
+}
+
+.messages-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.messages-wrapper::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.messages-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.message {
+    margin: 0.5rem 0;
+    padding: 0.5rem 1rem;
+    /* Increased border-radius for modern, rounded look */
+    border-radius: 12px;
+    max-width: 65%;
+    /* Slightly tighter width */
+    line-height: 1.4;
+}
+
+.message-sent {
+    margin-left: auto;
+    /* Discord's primary accent color (Blue/Purple) */
+    background-color: #5865f2;
+    color: white;
+}
+
+.message-received {
+    margin-right: auto;
+    /* Dark grey bubble for received messages */
+    background-color: #40444b;
+    color: #dcddde;
+}
+
+.message strong {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    display: block;
+    /* Ensures username is on its own line */
+    margin-bottom: 0.1rem;
+}
+
+.message-sent strong {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message-received strong {
+    color: #99aab5;
+}
+
+.message p {
+    margin: 0;
+}
+
+.message-input-container {
+    padding: 1rem;
+    /* Input area matches secondary background */
+    background-color: #2f3136;
+    border-top: 1px solid #202225;
+    max-width: 1000px;
+
+    form {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        input {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            background-color: #40444b;
+            color: #dcddde;
+        }
+
+        button {
+            margin-left: 1rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 20px;
+            background-color: #5865f2;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+
+            &:hover {
+                background-color: #4752c4;
+            }
+        }
+    }
+}
+
+.no-messages {
+    text-align: center;
+    color: #99aab5;
+    margin-top: 2rem;
+}
+
+
+/* ========= MOBILE BEHAVIOR ========= */
+@media (max-width: 768px) {
+    .chat-layout {
+        position: relative;
+        flex-direction: column;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .user-profile {
+        display: none;
+    }
+
+    .chat-list-container,
+    .chat-window-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.3s ease-in-out;
+        will-change: transform;
+    }
+
+    .chat-list-container.hidden-mobile {
+        transform: translateX(-100%);
+    }
+
+    .chat-window-container.hidden-mobile {
+        transform: translateX(100%);
+    }
+
+    .chat-window-container,
+    .chat-list-container {
+        z-index: 1;
+    }
+
+    .chat-window-container {
+        z-index: 2;
+        background-color: #36393f;
+    }
+
+    .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .back-button {
+        display: inline-block !important;
+        position: relative;
+        z-index: 10;
+        background: none;
+        border: none;
+        color: #5865f2;
+        font-size: 2rem;
+        margin-right: 1rem;
+        cursor: pointer;
+        vertical-align: middle;
+        padding: 0;
+        transition: color 0.2s ease;
+    }
+
+    .back-button:hover {
+        color: #ffffff;
+    }
+}

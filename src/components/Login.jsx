@@ -1,8 +1,11 @@
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { setUser, setToken } from "../store/userSlice";
 import API from "../api/api";
 
 // Renaming the component to 'App' for primary export, keeping the login logic flow.
 const Login = ({ onLogin }) => {
+  const dispatch = useDispatch();
   const [view, setView] = useState("register"); // Default to Register/Signup view
 
   // RETAINING ORIGINAL STATE + new state for registration
@@ -28,14 +31,13 @@ const Login = ({ onLogin }) => {
     try {
       const { data } = await API.post(endpoint, payload);
 
-      // Save JWT token for authenticated API calls
+      // Save user and token to Redux (which will also save to localStorage)
       if (data.token) {
-        localStorage.setItem("token", data.token);
+        dispatch(setToken(data.token));
       }
-
-      // Pass only the user object to parent
-      if (data.user && onLogin) {
-        onLogin(data.user);
+      if (data.user) {
+        dispatch(setUser(data.user));
+        if (onLogin) onLogin(data.user);
       }
 
       console.log("✅ Auth successful. User:", data.user);

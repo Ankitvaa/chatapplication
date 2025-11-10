@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "./styles.scss";
 
 const MessageInput = ({ onSend }) => {
     const [text, setText] = useState("");
@@ -11,16 +12,18 @@ const MessageInput = ({ onSend }) => {
     };
 
     return (
-        <form onSubmit={handleSend} style={{ marginTop: "1rem" }}>
-            <input
-                type="text"
-                placeholder="Type a message..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                style={{ width: "80%" }}
-            />
-            <button type="submit">Send</button>
-        </form>
+        <div className="message-input">
+            <form onSubmit={handleSend} className="message-input__form">
+                <input
+                    type="text"
+                    placeholder="Type a message..."
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    className="message-input__input"
+                />
+                <button type="submit" className="message-input__button">Send</button>
+            </form>
+        </div>
     );
 };
 
