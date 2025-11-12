@@ -29,7 +29,8 @@
 }
 
 .chat-list-container {
-    width: 300px;
+    flex: 0 0 20%;
+    /* width: 300px; */
     /* Darker background for the channel/chat list */
     background-color: #2f3136;
     /* Subtle, darker divider */

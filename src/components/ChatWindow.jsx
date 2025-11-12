@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import InviteUserModal from "./InviteUserModal";
+import RemoveUserModal from "./RemoveUserModal";
 import { io } from "socket.io-client";
 import API from "../api/api";
 import MessageInput from "./MessageInput";
@@ -24,7 +26,9 @@ const ChatWindow = ({ user, onBack }) => {
     );
 
     const [participants, setParticipants] = useState([]);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const [showParticipants, setShowParticipants] = useState(false);
+    const [userToRemove, setUserToRemove] = useState(null);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -120,6 +124,14 @@ const ChatWindow = ({ user, onBack }) => {
         }
     };
 
+    const removeParticipant = (participant) => {
+        setUserToRemove(participant);
+    };
+
+    const handleUserRemoved = (userId) => {
+        setParticipants(participants.filter(p => p._id !== userId));
+    };
+
     if (!activeChat) return null;
 
     return (
@@ -143,13 +155,13 @@ const ChatWindow = ({ user, onBack }) => {
                             if (activeChat.isGroupChat && activeChat.chatName) {
                                 return activeChat.chatName;
                             }
-                            
+
                             // For non-group chats or if no group name, show participants
                             if (participants.length === 0) return "Loading chat...";
-                            
+
                             const otherParticipants = participants.filter(p => p._id !== user?._id);
                             if (otherParticipants.length === 0) return "No other participants";
-                            
+
                             return otherParticipants
                                 .map(p => p.name || p.email || "Unnamed")
                                 .join(", ");
@@ -164,6 +176,13 @@ const ChatWindow = ({ user, onBack }) => {
                     >
                         👥 {participants.length}
                     </button>
+
+                    <button
+                        className="invite-button"
+                        onClick={() => setShowInviteModal(true)}
+                    >
+                        ✉️ Invite
+                    </button>
                 </div>
             </div>
 
@@ -175,12 +194,40 @@ const ChatWindow = ({ user, onBack }) => {
                     ) : (
                         <ul>
                             {participants.map((p) => (
-                                <li key={p._id}>{p.name || p.email || "Unnamed"}</li>
+                                <li key={p._id} className="participant-item">
+                                    <span>{p.name || p.email || "Unnamed"}</span>
+                                    {p._id !== user?._id && (
+                                        <button
+                                            className="remove-participant-btn"
+                                            onClick={() => removeParticipant(p)}
+                                            title="Remove participant"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </li>
                             ))}
                         </ul>
                     )}
                 </div>
             )}
+
+            {showInviteModal && (
+                <InviteUserModal
+                    chatId={activeChat._id}
+                    onClose={() => setShowInviteModal(false)}
+                />
+            )}
+
+            {userToRemove && (
+                <RemoveUserModal
+                    user={userToRemove}
+                    chatId={activeChat._id}
+                    onClose={() => setUserToRemove(null)}
+                    onUserRemoved={handleUserRemoved}
+                />
+            )}
+
 
             {/* ✅ Messages */}
             <div className="messages-container">

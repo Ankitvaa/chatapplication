@@ -67,11 +67,12 @@
 }
 
 .user-profile {
+    flex: 0 0 30%;
     padding: 1rem;
     background-color: #2f3136;
     border-left: 1px solid #202225;
     height: 100vh;
-    width: 240px;
+    // width: 240px;
     color: #dcddde;
 
     &__header {
@@ -251,6 +252,41 @@
     background: #18191c;
 }
 
+/* === PARTICIPANT ITEM & REMOVE BUTTON === */
+.participant-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    span {
+        flex: 1;
+    }
+}
+
+.remove-participant-btn {
+    background: transparent;
+    border: none;
+    color: #ed4245;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        background: #ed4245;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
 /* Small fade-in animation */
 @keyframes fadeIn {
     from {
@@ -286,4 +322,19 @@
     &:hover {
         color: #000;
     }
+}
+
+.invite-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.invite-button:hover {
+    background-color: #0056b3;
 }
