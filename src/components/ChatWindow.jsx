@@ -19,6 +19,7 @@ const socket = io("http://localhost:8080", {
 });
 
 const ChatWindow = ({ user, onBack }) => {
+    const socketListenerAdded = useRef(false);
     const dispatch = useDispatch();
     const activeChat = useSelector(selectActiveChat);
     const messages = useSelector((state) =>
@@ -46,8 +47,10 @@ const ChatWindow = ({ user, onBack }) => {
     useEffect(() => {
         if (!activeChat?._id) return;
 
+        // Join chat room
         socket.emit("joinChat", activeChat._id);
 
+        // Load messages
         const loadMessages = async () => {
             try {
                 const { data } = await API.get(`/messages/${activeChat._id}`);
@@ -61,45 +64,40 @@ const ChatWindow = ({ user, onBack }) => {
                 console.error("❌ Failed to load messages:", err);
             }
         };
-        loadMessages();
 
-        // ✅ Fetch chat participants
+        // Load participants
         const loadParticipants = async () => {
             try {
-                console.log('Fetching chat details for ID:', activeChat._id); // Debug: Log chat ID
-                const response = await API.get(`/chats/chat/${activeChat._id}`);
-                console.log('Full API Response:', response); // Debug: Log full response
-                const { data } = response;
-                console.log('Response data:', data); // Debug: Log data specifically
-
-                // Check for members in the response
-                if (data && data.members) {
-                    console.log('Found members in chat:', data.members);
-                    setParticipants(data.members);
-                } else {
-                    console.error('No members found in response:', data);
-                    setParticipants([]);
-                }
+                const { data } = await API.get(`/chats/chat/${activeChat._id}`);
+                setParticipants(data?.members || []);
             } catch (err) {
                 console.error("❌ Failed to load participants:", err);
-                if (err.response) {
-                    console.error('Error response:', err.response.data);
-                    console.error('Error status:', err.response.status);
-                }
                 setParticipants([]);
             }
         };
+
+        loadMessages();
         loadParticipants();
 
-        socket.on("messageReceived", (message) => {
-            dispatch(addMessage({ chatId: activeChat._id, message }));
-        });
+        // ✅ Register socket listener ONLY ONCE
+        if (!socketListenerAdded.current) {
+            socket.on("messageReceived", (message) => {
+                dispatch(
+                    addMessage({
+                        chatId: message.chatId,
+                        message,
+                    })
+                );
+            });
+
+            socketListenerAdded.current = true;
+        }
 
         return () => {
             socket.emit("leaveChat", activeChat._id);
-            socket.off("messageReceived");
         };
     }, [activeChat?._id, dispatch]);
+
 
     useEffect(() => {
         scrollToBottom();
@@ -107,22 +105,22 @@ const ChatWindow = ({ user, onBack }) => {
 
     const sendMessage = async (text) => {
         if (!text.trim() || !activeChat?._id) return;
+
         const message = {
             chatId: activeChat._id,
-            senderId: user?._id || "anonymous",
+            senderId: user?._id,
             senderName: user?.name || user?.username || "Unknown",
             content: text,
-            createdAt: new Date(),
         };
 
         try {
             await API.post("/messages/message", message);
             socket.emit("newMessage", message);
-            dispatch(addMessage({ chatId: activeChat._id, message }));
         } catch (err) {
             console.error("❌ Failed to send message:", err);
         }
     };
+
 
     const removeParticipant = (participant) => {
         setUserToRemove(participant);

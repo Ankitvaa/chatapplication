@@ -1,0 +1,25 @@
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bubbleGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366F1"></stop>
+      <stop offset="50%" stop-color="#8B5CF6"></stop>
+      <stop offset="100%" stop-color="#22D3EE"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- Chat Bubble -->
+  <path d="M110 24C60.8 24 22 58.6 22 101.2C22 128.6 38.2 152.8 63.8 165.2L58 196L89.4 178.6C95.8 179.6 102.8 180.4 110 180.4C159.2 180.4 198 145.8 198 101.2C198 58.6 159.2 24 110 24Z" fill="url(#bubbleGradient)"></path>
+
+  <!-- Shield -->
+  <path d="M110 64L150 80V110C150 138 129 154 110 162C91 154 70 138 70 110V80L110 64Z" fill="#020617" stroke="#E5E7EB" stroke-width="3"></path>
+
+  <!-- Chat dots -->
+  <circle cx="95" cy="110" r="5" fill="#E5E7EB"></circle>
+  <circle cx="110" cy="110" r="5" fill="#E5E7EB"></circle>
+  <circle cx="125" cy="110" r="5" fill="#E5E7EB"></circle>
+
+  <!-- Text -->
+  <text x="110" y="210" text-anchor="middle" font-size="26" font-weight="600" fill="#E5E7EB" font-family="Inter, system-ui, -apple-system, BlinkMacSystemFont">
+    ChatApp
+  </text>
+</svg>
