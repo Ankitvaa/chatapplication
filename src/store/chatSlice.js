@@ -15,6 +15,13 @@ export const chatSlice = createSlice({
     },
     setActiveChat: (state, action) => {
       state.activeChat = action.payload;
+      // Also update in chats array if it exists
+      if (action.payload?._id) {
+        const chatIndex = state.chats.findIndex(chat => chat._id === action.payload._id);
+        if (chatIndex !== -1) {
+          state.chats[chatIndex] = action.payload;
+        }
+      }
     },
     addMessage: (state, action) => {
       const { chatId, message } = action.payload;
@@ -27,10 +34,20 @@ export const chatSlice = createSlice({
       const { chatId, messages } = action.payload;
       state.messages[chatId] = messages;
     },
+    updateActiveChatAvatar: (state, action) => {
+      if (state.activeChat) {
+        state.activeChat.avatar = action.payload;
+      }
+      // Also update in chats array if it exists
+      const chatIndex = state.chats.findIndex(chat => chat._id === state.activeChat?._id);
+      if (chatIndex !== -1) {
+        state.chats[chatIndex].avatar = action.payload;
+      }
+    },
   },
 });
 
-export const { setChats, setActiveChat, addMessage, setMessages } = chatSlice.actions;
+export const { setChats, setActiveChat, addMessage, setMessages, updateActiveChatAvatar } = chatSlice.actions;
 
 // Selectors
 export const selectChats = (state) => state.chat.chats;

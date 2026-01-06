@@ -4,16 +4,26 @@ import ChatWindow from "./components/ChatWindow";
 import Login from "./components/Login";
 import ChatList from "./components/ChatList";
 import UserProfile from "./components/UserProfile";
+import ThemeToggle from "./components/ThemeToggle";
 import { selectActiveChat, setActiveChat } from "./store/chatSlice";
 import { selectUser } from "./store/userSlice";
-import "./App.css";
+import { selectTheme } from "./store/themeSlice";
+import "./styles/themes.scss";
+import "./App.scss";
 
 function App() {
   // All hooks at the top level
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
   const activeChat = useSelector(selectActiveChat);
+  const theme = useSelector(selectTheme);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
@@ -35,20 +45,22 @@ function App() {
         {/* Chat List Section */}
         {showChatList && (
           <div
-            className={`chat-list-container ${
-              isMobile && activeChat ? "hidden-mobile" : ""
-            }`}
+            className={`chat-list-container ${isMobile && activeChat ? "hidden-mobile" : ""
+              }`}
           >
-            <ChatList user={user} />
+            <div className="chat-list-scroll">
+              <ChatList user={user} />
+            </div>
+            {/* User Profile Section - Fixed at bottom */}
+            {!isMobile && <UserProfile />}
           </div>
         )}
 
         {/* Chat Window Section */}
         {showChatWindow && (
           <div
-            className={`chat-window-container ${
-              isMobile && !activeChat ? "hidden-mobile" : ""
-            }`}
+            className={`chat-window-container ${isMobile && !activeChat ? "hidden-mobile" : ""
+              }`}
           >
             {activeChat ? (
               <ChatWindow
@@ -62,9 +74,6 @@ function App() {
             )}
           </div>
         )}
-
-        {/* User Profile Section */}
-        {!isMobile && <UserProfile />}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import InviteUserModal from "./InviteUserModal";
 import RemoveUserModal from "./RemoveUserModal";
+import GroupInfo from "./GroupInfo";
 import { io } from "socket.io-client";
 import API from "../api/api";
 import MessageInput from "./MessageInput";
@@ -29,12 +30,30 @@ const ChatWindow = ({ user, onBack }) => {
     const [participants, setParticipants] = useState([]);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showParticipants, setShowParticipants] = useState(false);
+    const [showGroupInfo, setShowGroupInfo] = useState(false);
     const [userToRemove, setUserToRemove] = useState(null);
+    const [notification, setNotification] = useState(null); // ✅ Notification state
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    // ✅ Notification helper
+    const showNotification = (message, type = "info") => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 4000); // Auto-hide after 4s
+    };
+
+    const formatTime = (date) => {
+        if (!date) return "";
+        return new Date(date).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        });
+    };
+
 
     // ✅ Detect mobile
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -69,7 +88,13 @@ const ChatWindow = ({ user, onBack }) => {
         const loadParticipants = async () => {
             try {
                 const { data } = await API.get(`/chats/chat/${activeChat._id}`);
-                setParticipants(data?.members || []);
+                const chatData = data;
+                setParticipants(chatData?.members || []);
+
+                // Also update Redux with the full chat data (including avatar)
+                if (chatData && chatData._id) {
+                    dispatch(setActiveChat(chatData));
+                }
             } catch (err) {
                 console.error("❌ Failed to load participants:", err);
                 setParticipants([]);
@@ -121,6 +146,75 @@ const ChatWindow = ({ user, onBack }) => {
         }
     };
 
+    // ✅ Delete entire chat (admin only for groups, any member for 1:1)
+    const handleDeleteChat = async () => {
+        if (!activeChat?._id) return;
+
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this chat? This action cannot be undone."
+        );
+
+        if (!confirmDelete) return;
+
+        try {
+            await API.delete(`/chats/${activeChat._id}`);
+
+            // Leave socket room
+            socket.emit("leaveChat", activeChat._id);
+
+            // Clear messages from redux
+            dispatch(
+                setMessages({
+                    chatId: activeChat._id,
+                    messages: [],
+                })
+            );
+
+            showNotification("Chat deleted successfully", "success");
+            // Go back to chat list after short delay
+            setTimeout(() => onBack(), 500);
+        } catch (err) {
+            console.error("❌ Failed to delete chat:", err);
+            const serverMessage = err.response?.data?.error || err.response?.data?.message || err.message;
+            showNotification(`Failed to delete chat: ${serverMessage}`, "error");
+        }
+    };
+
+    // ✅ Leave group chat (remove yourself from members)
+    const handleLeaveChat = async () => {
+        if (!activeChat?._id) return;
+
+        const confirmLeave = window.confirm(
+            "Are you sure you want to leave this group chat?"
+        );
+
+        if (!confirmLeave) return;
+
+        try {
+            await API.post(`/chats/${activeChat._id}/leave`);
+
+            // Leave socket room
+            socket.emit("leaveChat", activeChat._id);
+
+            // Clear messages from redux
+            dispatch(
+                setMessages({
+                    chatId: activeChat._id,
+                    messages: [],
+                })
+            );
+
+            showNotification("You have left the group", "success");
+            // Go back to chat list after short delay
+            setTimeout(() => onBack(), 500);
+        } catch (err) {
+            console.error("❌ Failed to leave chat:", err);
+            const serverMessage = err.response?.data?.error || err.response?.data?.message || err.message;
+            showNotification(`Failed to leave chat: ${serverMessage}`, "error");
+        }
+    };
+
+
 
     const removeParticipant = (participant) => {
         setUserToRemove(participant);
@@ -135,11 +229,14 @@ const ChatWindow = ({ user, onBack }) => {
     return (
         <div className="chat-window">
             {/* ✅ Chat Header */}
-            <div className="chat-header">
+            <div className="chat-header" onClick={() => activeChat.isGroupChat && setShowGroupInfo(true)} style={{ cursor: activeChat.isGroupChat ? "pointer" : "default" }}>
                 {isMobile && (
                     <button
                         className="back-button"
-                        onClick={onBack}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onBack();
+                        }}
                         aria-label="Go Back"
                         type="button"
                     >
@@ -147,40 +244,66 @@ const ChatWindow = ({ user, onBack }) => {
                     </button>
                 )}
                 <div style={{ display: "flex", alignItems: "center", width: "100%", justifyContent: "space-between" }}>
-                    <h3 style={{ margin: 0, fontSize: isMobile ? "16px" : "18px" }}>
-                        {(() => {
-                            // For group chats, prefer the group name
-                            if (activeChat.isGroupChat && activeChat.chatName) {
-                                return activeChat.chatName;
-                            }
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+                        {activeChat.avatar && (
+                            <img
+                                src={activeChat.avatar}
+                                alt={activeChat.chatName || activeChat.name}
+                                style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                    flexShrink: 0
+                                }}
+                            />
+                        )}
+                        <h3 style={{ margin: 0, fontSize: isMobile ? "16px" : "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {(() => {
+                                // For group chats, prefer the group name
+                                if (activeChat.isGroupChat && activeChat.chatName) {
+                                    return activeChat.chatName;
+                                }
 
-                            // For non-group chats or if no group name, show participants
-                            if (participants.length === 0) return "Loading chat...";
+                                // For non-group chats or if no group name, show participants
+                                if (participants.length === 0) return "Loading chat...";
 
-                            const otherParticipants = participants.filter(p => p._id !== user?._id);
-                            if (otherParticipants.length === 0) return "No other participants";
+                                const otherParticipants = participants.filter(p => p._id !== user?._id);
+                                if (otherParticipants.length === 0) return "No other participants";
 
-                            return otherParticipants
-                                .map(p => p.name || p.email || "Unnamed")
-                                .join(", ");
-                        })()}
-                    </h3>
+                                return otherParticipants
+                                    .map(p => p.name || p.email || "Unnamed")
+                                    .join(", ");
+                            })()}
+                        </h3>
+                    </div>
 
 
                     {/* ✅ Participants Toggle Button */}
                     <button
                         className="participants-button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowGroupInfo(true);
+                        }}
+                        title="View group information"
+                    >
+                        ⋮
+                    </button>
+                    {/* 
+                    <button
+                        className="participants-button"
                         onClick={() => setShowParticipants(!showParticipants)}
                     >
                         👥 {participants.length}
-                    </button>
+                    </button> */}
 
-                    <button
+                    {/* <button
                         className="invite-button"
                         onClick={() => setShowInviteModal(true)}
                     >
                         ✉️ Invite
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
@@ -217,6 +340,18 @@ const ChatWindow = ({ user, onBack }) => {
                 />
             )}
 
+            {/* ✅ Group Info Modal */}
+            {showGroupInfo && activeChat.isGroupChat && (
+                <GroupInfo
+                    chat={activeChat}
+                    participants={participants}
+                    user={user}
+                    onClose={() => setShowGroupInfo(false)}
+                    onDeleteChat={handleDeleteChat}
+                    onLeaveChat={handleLeaveChat}
+                />
+            )}
+
             {userToRemove && (
                 <RemoveUserModal
                     user={userToRemove}
@@ -242,7 +377,13 @@ const ChatWindow = ({ user, onBack }) => {
                                 <strong>
                                     {m.senderId === user._id ? "You" : m.senderName || "User"}
                                 </strong>
-                                <p>{m.content}</p>
+
+                                <div className="message-content">
+                                    <span className="message-text">{m.content}</span>
+                                    <span className="message-time">
+                                        {formatTime(m.createdAt)}
+                                    </span>
+                                </div>
                             </div>
                         ))
                     )}
@@ -250,10 +391,49 @@ const ChatWindow = ({ user, onBack }) => {
                 </div>
             </div>
 
+
             {/* ✅ Message Input */}
             <div className="message-input-container">
                 <MessageInput onSend={sendMessage} />
             </div>
+
+            {/* ✅ Notification Toast */}
+            {notification && (
+                <div
+                    style={{
+                        position: "fixed",
+                        top: "20px",
+                        right: "20px",
+                        padding: "12px 20px",
+                        borderRadius: "6px",
+                        color: "white",
+                        fontWeight: "500",
+                        fontSize: "14px",
+                        zIndex: 9999,
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                        animation: "slideIn 0.3s ease-out",
+                        backgroundColor:
+                            notification.type === "success" ? "#10b981" :
+                                notification.type === "error" ? "#ef4444" :
+                                    "#3b82f6",
+                    }}
+                >
+                    {notification.message}
+                </div>
+            )}
+
+            <style>{`
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `}</style>
         </div>
     );
 };

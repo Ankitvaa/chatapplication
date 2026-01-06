@@ -1,0 +1,130 @@
+// ============================================
+// LIGHT THEME CSS VARIABLES
+// ============================================
+:root[data-theme="light"] {
+  // A soft, professional gradient from top-left to bottom-right
+  --color-bg-main: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --color-bg-secondary: rgba(255, 255, 255, 0.7);
+  --color-bg-tertiary: rgba(255, 255, 255, 0.6);
+  --color-bg-card: rgba(255, 255, 255, 0.8);
+  --color-bg-darker: rgba(255, 255, 255, 0.75);
+  --color-bg-darkest: rgba(255, 255, 255, 0.9);
+
+  // Text Colors
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #4a4a4a;
+  --color-text-muted: #777777;
+  --color-text-dark: #000000;
+  --color-text-white: #ffffff;
+  --color-text-light: #333333;
+  --color-text-lighter: #5a5a5a;
+
+  // Border Colors
+  --color-border-dark: rgba(255, 255, 255, 0.3);
+  --color-border-secondary: rgba(255, 255, 255, 0.4);
+  --color-border-light: rgba(255, 255, 255, 0.5);
+  --color-border-darker: rgba(255, 255, 255, 0.2);
+
+  // Primary & Status Colors
+  --color-primary: #4399ed;
+  --color-primary-hover: #4399ed;
+  --color-danger: #ed4245;
+  --color-danger-hover: #c03537;
+  --color-status-online: #3ba55c;
+
+  // Overlays
+  --color-overlay-dark: rgba(0, 0, 0, 0.1);
+  --color-overlay-darker: rgba(0, 0, 0, 0.15);
+
+  // Blur & Glass Effect
+  --blur-amount: 20px;
+  --glass-effect: blur(20px);
+  --glass-opacity: 0.7;
+  --border-color: rgba(255, 255, 255, 0.3);
+  --box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+// ============================================
+// DARK THEME CSS VARIABLES
+// ============================================
+:root[data-theme="dark"] {
+  // Background Colors
+  --color-bg-main: #36393f;
+  --color-bg-secondary: #2f3136;
+  --color-bg-tertiary: #40444b;
+  --color-bg-card: #36393f;
+  --color-bg-darker: #1e293b;
+  --color-bg-darkest: #020617;
+
+  // Text Colors
+  --color-text-primary: #dcddde;
+  --color-text-secondary: #b9bbbe;
+  --color-text-muted: #72767d;
+  --color-text-dark: #444444;
+  --color-text-white: #ffffff;
+  --color-text-light: #e5e7eb;
+  --color-text-lighter: #cbd5f5;
+
+  // Border Colors
+  --color-border-dark: #202225;
+  --color-border-secondary: #40444b;
+  --color-border-light: #e0e0e0;
+  --color-border-darker: #1e293b;
+
+  // Primary & Status Colors
+  --color-primary: #4399ed;
+  --color-primary-hover: #4399ed;
+  --color-danger: #ed4245;
+  --color-danger-hover: #c03537;
+  --color-status-online: #3ba55c;
+
+  // Overlays
+  --color-overlay-dark: rgba(0, 0, 0, 0.6);
+  --color-overlay-darker: rgba(0, 0, 0, 0.75);
+}
+
+// ============================================
+// DEFAULT THEME (DARK)
+// ============================================
+:root {
+  // Background Colors
+  --color-bg-main: #36393f;
+  --color-bg-secondary: #2f3136;
+  --color-bg-tertiary: #40444b;
+  --color-bg-card: #36393f;
+  --color-bg-darker: #1e293b;
+  --color-bg-darkest: #020617;
+
+  // Text Colors
+  --color-text-primary: #dcddde;
+  --color-text-secondary: #b9bbbe;
+  --color-text-muted: #72767d;
+  --color-text-dark: #444444;
+  --color-text-white: #ffffff;
+  --color-text-light: #e5e7eb;
+  --color-text-lighter: #cbd5f5;
+
+  // Border Colors
+  --color-border-dark: #202225;
+  --color-border-secondary: #40444b;
+  --color-border-light: #e0e0e0;
+  --color-border-darker: #1e293b;
+
+  // Primary & Status Colors
+  --color-primary: #4399ed;
+  --color-primary-hover: #4399ed;
+  --color-danger: #ed4245;
+  --color-danger-hover: #c03537;
+  --color-status-online: #3ba55c;
+
+  // Overlays
+  --color-overlay-dark: rgba(0, 0, 0, 0.6);
+  --color-overlay-darker: rgba(0, 0, 0, 0.75);
+}
+
+// ============================================
+// GLOBAL THEME TRANSITIONS
+// ============================================
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

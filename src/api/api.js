@@ -20,9 +20,12 @@ API.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      console.warn("Token expired. Redirecting to login...");
+      console.warn("❌ 401 Unauthorized - Token invalid or expired");
       localStorage.removeItem("token"); // clear invalid token
-      window.location.href = "/login";  // redirect to login page
+      // Delay redirect to let error be caught and handled by calling code first
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 500);
     }
     return Promise.reject(error);
   }

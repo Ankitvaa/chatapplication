@@ -1,12 +1,24 @@
 import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import API from "../api/api";
+import GroupAvatarUpload from "./GroupAvatarUpload";
+import { setActiveChat, setChats, selectChats } from "../store/chatSlice";
 import "./removeUserModal.scss";
 
 const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
+    const dispatch = useDispatch();
+    const chats = useSelector(selectChats);
     const [groupName, setGroupName] = useState("");
     const [memberEmails, setMemberEmails] = useState("");
+    const [groupAvatarFile, setGroupAvatarFile] = useState(null);
+    const [groupAvatarPreview, setGroupAvatarPreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    const handleAvatarSelect = (file, preview) => {
+        setGroupAvatarFile(file);
+        setGroupAvatarPreview(preview);
+    };
 
     const handleCreateGroup = async () => {
         if (!groupName.trim()) {
@@ -14,7 +26,6 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
             return;
         }
 
-        // Parse emails from input (comma-separated)
         const emails = memberEmails
             .split(",")
             .map((email) => email.trim())
@@ -24,6 +35,13 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
         setError("");
 
         try {
+            const token = localStorage.getItem("token");
+            console.log("🔑 Token exists:", token ? "✅ Yes" : "❌ No");
+            if (!token) {
+                setError("Session expired. Please log in again.");
+                return;
+            }
+
             const payload = {
                 chatName: groupName.trim(),
                 memberEmails: emails,
@@ -31,18 +49,71 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                 creatorEmail: user.email,
             };
 
-            console.log("📤 Sending payload:", payload);
+            console.log("📤 Step 1: Creating group...", payload);
             const { data } = await API.post("/chats", payload);
+            const newChat = data.chat;
 
-            console.log("✅ Group created:", data);
-            onGroupCreated(data.chat);
+            console.log("✅ Group created:", newChat);
+
+            if (groupAvatarFile && newChat._id) {
+                console.log("📸 Step 2: Uploading avatar to chat:", newChat._id);
+                
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    const base64Avatar = e.target.result;
+                    console.log("📸 Avatar base64 length:", base64Avatar.length);
+                    
+                    try {
+                        const avatarResponse = await API.put(`/chats/${newChat._id}/avatar`, {
+                            avatar: base64Avatar
+                        });
+
+                        console.log("✅ Avatar uploaded successfully");
+                        
+                        let updatedChat = newChat;
+                        
+                        if (avatarResponse.data?.chat) {
+                            updatedChat = avatarResponse.data.chat;
+                            console.log("📝 Chat from response:", updatedChat);
+                        } else {
+                            updatedChat = { ...newChat, avatar: base64Avatar };
+                            console.log("📝 Using base64 as fallback");
+                        }
+                        
+                        console.log("🖼️ Chat avatar:", updatedChat.avatar);
+                        dispatch(setActiveChat(updatedChat));
+                        
+                        try {
+                            const { data: allChats } = await API.get(`/chats/${user._id}`);
+                            dispatch(setChats(allChats));
+                            console.log("✅ Refreshed all chats");
+                        } catch (refreshErr) {
+                            console.warn("Could not refresh chats");
+                        }
+                        
+                        onGroupCreated(updatedChat);
+                    } catch (avatarErr) {
+                        console.error("⚠️ Avatar upload error:", avatarErr.response?.data);
+                        console.log("Group created, proceeding without avatar");
+                        onGroupCreated(newChat);
+                    }
+                };
+                
+                reader.onerror = () => {
+                    console.error("⚠️ Error reading file");
+                    onGroupCreated(newChat);
+                };
+                
+                reader.readAsDataURL(groupAvatarFile);
+            } else {
+                onGroupCreated(newChat);
+            }
+
             onClose();
         } catch (err) {
             console.error("❌ Failed to create group:", err);
-            console.error("Response data:", err.response?.data);
-            setError(
-                err.response?.data?.error || "Failed to create group. Please try again."
-            );
+            setError(err.response?.data?.error || "Failed to create group. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -57,6 +128,12 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                 </div>
 
                 <div className="modal-body">
+                    <GroupAvatarUpload 
+                        groupName={groupName} 
+                        onAvatarSelect={handleAvatarSelect}
+                        previewAvatar={groupAvatarPreview}
+                    />
+
                     <label className="input-label">Group Name</label>
                     <input
                         type="text"
@@ -83,17 +160,16 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                         Cancel
                     </button>
                     <button
-                        type="button"           // ← explicitly set type
+                        type="button"
                         className="btn btn-primary"
                         onClick={(e) => {
-                            e.preventDefault();   // ← prevent default page refresh
-                            handleCreateGroup();  // call your async function
+                            e.preventDefault();
+                            handleCreateGroup();
                         }}
                         disabled={loading}
                     >
                         {loading ? "Creating..." : "Create Group"}
                     </button>
-
                 </div>
             </div>
         </div>

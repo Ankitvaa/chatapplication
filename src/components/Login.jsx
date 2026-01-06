@@ -39,11 +39,9 @@ const Login = ({ onLogin }) => {
         dispatch(setUser(data.user));
         if (onLogin) onLogin(data.user);
       }
-
-      console.log("✅ Auth successful. User:", data.user);
     } catch (err) {
       console.error("Auth failed:", err);
-      // Replaced alert() with state-based display
+      // Display error message using state instead of alert
       const errorMessage =
         err.response?.data?.error ||
         (isLogin
@@ -124,8 +122,8 @@ const Login = ({ onLogin }) => {
               ? "Logging in..."
               : "Registering..."
             : isLogin
-            ? "Login"
-            : "Continue"}
+              ? "Login"
+              : "Continue"}
         </button>
 
         {/* View Switcher (Register/Login Link) */}

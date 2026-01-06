@@ -1,0 +1,196 @@
+// ============================================
+// THEME VARIABLES - Using CSS Variables
+// These variables will be set dynamically via CSS
+// ============================================
+
+// Primary Colors
+$color-primary: var(--color-primary);
+$color-primary-hover: var(--color-primary-hover);
+$color-primary-dark: var(--color-primary);
+$color-primary-dark-hover: var(--color-primary-hover);
+
+// Danger Colors
+$color-danger: var(--color-danger);
+$color-danger-hover: var(--color-danger-hover);
+$color-danger-light: rgba(237, 66, 69, 0.1);
+
+// Neutral Background Colors
+$color-bg-darkest: var(--color-bg-darkest);
+$color-bg-dark: var(--color-bg-darker);
+$color-bg-darker: var(--color-bg-darker);
+$color-bg-card: var(--color-bg-card);
+$color-bg-secondary: var(--color-bg-secondary);
+$color-bg-tertiary: var(--color-bg-tertiary);
+$color-bg-light: var(--color-bg-main);
+
+// Text Colors
+$color-text-primary: var(--color-text-primary);
+$color-text-secondary: var(--color-text-secondary);
+$color-text-muted: var(--color-text-muted);
+$color-text-dark: var(--color-text-dark);
+$color-text-dark-hover: var(--color-text-dark);
+$color-text-white: var(--color-text-white);
+$color-text-light: var(--color-text-light);
+$color-text-lighter: var(--color-text-lighter);
+
+// Border & UI Colors
+$color-border-dark: var(--color-border-dark);
+$color-border-secondary: var(--color-border-secondary);
+$color-border-light: var(--color-border-light);
+$color-border-darker: var(--color-border-darker);
+
+// Status Colors
+$color-status-online: var(--color-status-online);
+
+// Overlay
+$color-overlay-dark: var(--color-overlay-dark);
+$color-overlay-darker: var(--color-overlay-darker);
+$color-overlay-danger: rgba(237, 66, 69, 0.4);
+
+// ============================================
+// SPACING
+// ============================================
+$spacing-xs: 4px;
+$spacing-sm: 6px;
+$spacing-md: 8px;
+$spacing-lg: 12px;
+$spacing-xl: 16px;
+$spacing-2xl: 20px;
+$spacing-3xl: 24px;
+$spacing-4xl: 32px;
+
+// ============================================
+// SIZING
+// ============================================
+$size-avatar: 48px;
+$size-status-dot: 8px;
+$size-scrollbar: 4px;
+
+// ============================================
+// BORDER RADIUS
+// ============================================
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 10px;
+$radius-full: 50%;
+$radius-round: 20px;
+
+// ============================================
+// TYPOGRAPHY
+// ============================================
+$font-size-xs: 13px;
+$font-size-sm: 14px;
+$font-size-base: 15px;
+$font-size-md: 1rem;
+$font-size-lg: 1.2rem;
+$font-size-xl: 1.3rem;
+$font-size-2xl: 18px;
+
+$font-weight-normal: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============================================
+// TRANSITIONS & ANIMATIONS
+// ============================================
+$transition-fast: 0.2s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+$animation-fade-in: fadeIn 0.2s ease;
+$animation-slide-up: slideUp 0.3s ease;
+$animation-fade-in-scale: fadeInScale 0.25s ease;
+
+// ============================================
+// SHADOWS
+// ============================================
+$shadow-small: 0 4px 12px rgba(237, 66, 69, 0.4);
+$shadow-medium: 0 8px 16px rgba(0, 0, 0, 0.24);
+$shadow-large: 0 8px 24px rgba(0, 0, 0, 0.4);
+$shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+// ============================================
+// LAYOUT
+// ============================================
+$user-profile-flex: 0 0 30%;
+$chat-list-height: 100vh;
+
+// ============================================
+// ANIMATION DEFINITIONS
+// ============================================
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInWithTransform {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// ============================================
+// MIXINS
+// ============================================
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin transition-all {
+  transition: all $transition-fast;
+}
+
+@mixin button-base {
+  border: none;
+  cursor: pointer;
+  border-radius: $radius-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-fast;
+}
+
+@mixin input-base {
+  border-radius: $radius-lg;
+  font-size: $font-size-sm;
+  outline: none;
+  transition: border-color $transition-fast, box-shadow $transition-fast;
+}
