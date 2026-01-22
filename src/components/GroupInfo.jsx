@@ -71,10 +71,10 @@ const GroupInfo = ({ chat, participants, user, onClose, onDeleteChat, onLeaveCha
     try {
       // Convert file to base64
       const reader = new FileReader();
-      
+
       reader.onload = async (e) => {
         const base64Avatar = e.target.result;
-        
+
         try {
           // Upload avatar as base64 string in JSON
           const response = await API.put(`/chats/${chat._id}/avatar`, {
@@ -125,24 +125,27 @@ const GroupInfo = ({ chat, participants, user, onClose, onDeleteChat, onLeaveCha
     setAvatarError(null);
 
     try {
-      const response = await API.put(`/chats/${chat._id}/avatar`, {
-        avatar: null
-      });
+      const response = await API.delete(`/chats/${chat._id}/avatar`);
 
-      // Update local chat object
       if (response.data?.chat) {
-        const updatedChat = response.data.chat;
-        dispatch(setActiveChat(updatedChat));
+        dispatch(setActiveChat(response.data.chat));
       }
-
-      setAvatarError(null);
     } catch (err) {
-      console.error("Error removing avatar:", err);
-      setAvatarError(err.response?.data?.message || 'Failed to remove avatar');
+      console.error('❌ Error removing avatar:', err);
+
+      setAvatarError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Failed to remove avatar'
+      );
     } finally {
       setIsUpdatingAvatar(false);
     }
   };
+
+
+
 
   const toggleSection = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -163,226 +166,228 @@ const GroupInfo = ({ chat, participants, user, onClose, onDeleteChat, onLeaveCha
 
         {/* Content */}
         <div className="group-info__content">
-        
-        {/* Group Name & Icon */}
-        <div className="group-info__section group-info__section--icon">
-          <div className="group-info__avatar-container">
-            {chat.avatar ? (
-              <img 
-                src={chat.avatar} 
-                alt={chat.chatName} 
-                className="group-info__avatar-image"
-              />
-            ) : (
-              <div className="group-info__icon">
-                {chat.chatName?.charAt(0).toUpperCase() || 'G'}
-              </div>
-            )}
-            {isCurrentUserAdmin && (
-              <div className="group-info__avatar-actions">
-                <button
-                  className="group-info__avatar-button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUpdatingAvatar}
-                  title="Update group avatar"
-                >
-                  📸
-                </button>
-                {chat.avatar && (
+
+          {/* Group Name & Icon */}
+          <div className="group-info__section group-info__section--icon">
+            <div className="group-info__avatar-container">
+              {chat.avatar ? (
+                <img
+                  src={chat.avatar}
+                  alt={chat.chatName}
+                  className="group-info__avatar-image"
+                />
+              ) : (
+                <div className="group-info__icon">
+                  {chat.chatName?.charAt(0).toUpperCase() || 'G'}
+                </div>
+              )}
+              {isCurrentUserAdmin && (
+                <div className="group-info__avatar-actions">
                   <button
-                    className="group-info__avatar-button group-info__avatar-button--danger"
-                    onClick={handleRemoveAvatar}
+                    className="group-info__avatar-button"
+                    onClick={() => fileInputRef.current?.click()}
                     disabled={isUpdatingAvatar}
-                    title="Remove group avatar"
+                    title="Update group avatar"
                   >
-                    🗑️
+                    📸
                   </button>
-                )}
-              </div>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleAvatarSelect}
-              accept="image/*"
-              style={{ display: 'none' }}
-              disabled={isUpdatingAvatar}
-            />
-          </div>
-          <div className="group-info__name-section">
-            <h3 className="group-info__name">{chat.chatName || 'Unnamed Group'}</h3>
-            <p className="group-info__type">
-              {chat.isGroupChat ? '👥 Group Chat' : '👤 Direct Message'}
-            </p>
-            {avatarError && (
-              <p className="group-info__error">{avatarError}</p>
-            )}
-            {isUpdatingAvatar && (
-              <p className="group-info__loading">Updating avatar...</p>
-            )}
-          </div>
-        </div>
+                  {chat.avatar && (
+                    <button
+                      type="button"   // ✅ IMPORTANT
+                      className="group-info__avatar-button group-info__avatar-button--danger"
+                      onClick={handleRemoveAvatar}
+                      disabled={isUpdatingAvatar}
+                      title="Remove group avatar"
+                    >
+                      🗑️
+                    </button>
+                  )}
 
-        {/* Group Details */}
-        <div className="group-info__details">
-          {/* Created Date */}
-          <div className="group-info__detail-item">
-            <span className="group-info__label">📅 Created On</span>
-            <span className="group-info__value">{formatDate(chat.createdAt)}</span>
-          </div>
-
-          {/* Total Participants */}
-          <div className="group-info__detail-item">
-            <span className="group-info__label">👥 Total Members</span>
-            <span className="group-info__value">{participants.length}</span>
+                </div>
+              )}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarSelect}
+                accept="image/*"
+                style={{ display: 'none' }}
+                disabled={isUpdatingAvatar}
+              />
+            </div>
+            <div className="group-info__name-section">
+              <h3 className="group-info__name">{chat.chatName || 'Unnamed Group'}</h3>
+              <p className="group-info__type">
+                {chat.isGroupChat ? '👥 Group Chat' : '👤 Direct Message'}
+              </p>
+              {avatarError && (
+                <p className="group-info__error">{avatarError}</p>
+              )}
+              {isUpdatingAvatar && (
+                <p className="group-info__loading">Updating avatar...</p>
+              )}
+            </div>
           </div>
 
-          {/* Group ID */}
-          {/* <div className="group-info__detail-item">
+          {/* Group Details */}
+          <div className="group-info__details">
+            {/* Created Date */}
+            <div className="group-info__detail-item">
+              <span className="group-info__label">📅 Created On</span>
+              <span className="group-info__value">{formatDate(chat.createdAt)}</span>
+            </div>
+
+            {/* Total Participants */}
+            <div className="group-info__detail-item">
+              <span className="group-info__label">👥 Total Members</span>
+              <span className="group-info__value">{participants.length}</span>
+            </div>
+
+            {/* Group ID */}
+            {/* <div className="group-info__detail-item">
             <span className="group-info__label">🔐 Group ID</span>
             <span className="group-info__value group-info__value--code">{chat._id}</span>
           </div> */}
-        </div>
+          </div>
 
-        {/* Admin Section */}
-        {chat.isGroupChat && admin && (
+          {/* Admin Section */}
+          {chat.isGroupChat && admin && (
+            <div className="group-info__section group-info__section--collapsible">
+              <button
+                className="group-info__section-toggle"
+                onClick={() => toggleSection('admin')}
+              >
+                <span className="group-info__section-title">👨‍💼 Admin</span>
+                <span className={`group-info__toggle-icon ${expandedSection === 'admin' ? 'expanded' : ''}`}>
+                  ▼
+                </span>
+              </button>
+
+              {expandedSection === 'admin' && (
+                <div className="group-info__section-content">
+                  <div className="group-info__participant-card group-info__participant-card--admin">
+                    <div className="group-info__participant-avatar">
+                      {admin.name?.charAt(0).toUpperCase() || admin.email?.charAt(0).toUpperCase() || 'A'}
+                    </div>
+                    <div className="group-info__participant-info">
+                      <h4 className="group-info__participant-name">
+                        {admin.name || 'Unknown'}
+                        <span className="group-info__badge group-info__badge--admin">Admin</span>
+                      </h4>
+                      <p className="group-info__participant-email">{admin.email || 'No email'}</p>
+                      {admin._id === user?._id && (
+                        <p className="group-info__you-badge">That's you!</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Participants Section */}
           <div className="group-info__section group-info__section--collapsible">
-            <button 
+            <button
               className="group-info__section-toggle"
-              onClick={() => toggleSection('admin')}
+              onClick={() => toggleSection('participants')}
             >
-              <span className="group-info__section-title">👨‍💼 Admin</span>
-              <span className={`group-info__toggle-icon ${expandedSection === 'admin' ? 'expanded' : ''}`}>
+              <span className="group-info__section-title">
+                👥 Members ({participants.length})
+              </span>
+              <span className={`group-info__toggle-icon ${expandedSection === 'participants' ? 'expanded' : ''}`}>
                 ▼
               </span>
             </button>
-            
-            {expandedSection === 'admin' && (
+
+            {expandedSection === 'participants' && (
               <div className="group-info__section-content">
-                <div className="group-info__participant-card group-info__participant-card--admin">
-                  <div className="group-info__participant-avatar">
-                    {admin.name?.charAt(0).toUpperCase() || admin.email?.charAt(0).toUpperCase() || 'A'}
-                  </div>
-                  <div className="group-info__participant-info">
-                    <h4 className="group-info__participant-name">
-                      {admin.name || 'Unknown'}
-                      <span className="group-info__badge group-info__badge--admin">Admin</span>
-                    </h4>
-                    <p className="group-info__participant-email">{admin.email || 'No email'}</p>
-                    {admin._id === user?._id && (
-                      <p className="group-info__you-badge">That's you!</p>
-                    )}
-                  </div>
+                <div className="group-info__participants-list">
+                  {participants.map((participant) => {
+                    const isAdmin = participant._id === chat.admin;
+                    const isCurrentUser = participant._id === user?._id;
+
+                    return (
+                      <div
+                        key={participant._id}
+                        className={`group-info__participant-card ${isAdmin ? 'group-info__participant-card--admin' : ''}`}
+                      >
+                        <div className="group-info__participant-avatar">
+                          {participant.name?.charAt(0).toUpperCase() || participant.email?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div className="group-info__participant-info">
+                          <h4 className="group-info__participant-name">
+                            {participant.name || 'Unknown'}
+                            {isAdmin && <span className="group-info__badge group-info__badge--admin">Admin</span>}
+                            {isCurrentUser && <span className="group-info__badge group-info__badge--you">You</span>}
+                          </h4>
+                          <p className="group-info__participant-email">{participant.email || 'No email'}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
-        )}
 
-        {/* Participants Section */}
-        <div className="group-info__section group-info__section--collapsible">
-          <button 
-            className="group-info__section-toggle"
-            onClick={() => toggleSection('participants')}
-          >
-            <span className="group-info__section-title">
-              👥 Members ({participants.length})
-            </span>
-            <span className={`group-info__toggle-icon ${expandedSection === 'participants' ? 'expanded' : ''}`}>
-              ▼
-            </span>
-          </button>
-
-          {expandedSection === 'participants' && (
-            <div className="group-info__section-content">
-              <div className="group-info__participants-list">
-                {participants.map((participant) => {
-                  const isAdmin = participant._id === chat.admin;
-                  const isCurrentUser = participant._id === user?._id;
-
-                  return (
-                    <div 
-                      key={participant._id} 
-                      className={`group-info__participant-card ${isAdmin ? 'group-info__participant-card--admin' : ''}`}
-                    >
-                      <div className="group-info__participant-avatar">
-                        {participant.name?.charAt(0).toUpperCase() || participant.email?.charAt(0).toUpperCase() || 'U'}
-                      </div>
-                      <div className="group-info__participant-info">
-                        <h4 className="group-info__participant-name">
-                          {participant.name || 'Unknown'}
-                          {isAdmin && <span className="group-info__badge group-info__badge--admin">Admin</span>}
-                          {isCurrentUser && <span className="group-info__badge group-info__badge--you">You</span>}
-                        </h4>
-                        <p className="group-info__participant-email">{participant.email || 'No email'}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Actions */}
+          {chat.isGroupChat && isCurrentUserAdmin && (
+            <div className="group-info__actions">
+              <p className="group-info__actions-title">⚙️ Admin Actions</p>
+              <p className="group-info__actions-hint">You have admin privileges in this group</p>
             </div>
           )}
-        </div>
 
-        {/* Actions */}
-        {chat.isGroupChat && isCurrentUserAdmin && (
-          <div className="group-info__actions">
-            <p className="group-info__actions-title">⚙️ Admin Actions</p>
-            <p className="group-info__actions-hint">You have admin privileges in this group</p>
+          {/* Info Footer */}
+          <div className="group-info__footer">
+            <p className="group-info__footer-text">
+              Created: {formatDate(chat.createdAt)}
+            </p>
           </div>
-        )}
 
-        {/* Info Footer */}
-        <div className="group-info__footer">
-          <p className="group-info__footer-text">
-            Created: {formatDate(chat.createdAt)}
-          </p>
-        </div>
-
-        {/* Action Buttons: Delete (admin/1:1) or Leave (member) */}
-        <div className="group-info__action-buttons">
-          {chat.isGroupChat ? (
-            // Group chat: Show delete if admin, leave if member
-            isCurrentUserAdmin ? (
+          {/* Action Buttons: Delete (admin/1:1) or Leave (member) */}
+          <div className="group-info__action-buttons">
+            {chat.isGroupChat ? (
+              // Group chat: Show delete if admin, leave if member
+              isCurrentUserAdmin ? (
+                <button
+                  className="group-info__button group-info__button--danger"
+                  onClick={() => {
+                    onDeleteChat();
+                    onClose();
+                  }}
+                  title="Delete entire group (admin only)"
+                >
+                  🗑️ Delete Group
+                </button>
+              ) : (
+                <button
+                  className="group-info__button group-info__button--warning"
+                  onClick={() => {
+                    onLeaveChat();
+                    onClose();
+                  }}
+                  title="Leave this group"
+                >
+                  👋 Leave Group
+                </button>
+              )
+            ) : (
+              // 1:1 chat: Any member can delete
               <button
                 className="group-info__button group-info__button--danger"
                 onClick={() => {
                   onDeleteChat();
                   onClose();
                 }}
-                title="Delete entire group (admin only)"
+                title="Delete chat"
               >
-                🗑️ Delete Group
+                🗑️ Delete Chat
               </button>
-            ) : (
-              <button
-                className="group-info__button group-info__button--warning"
-                onClick={() => {
-                  onLeaveChat();
-                  onClose();
-                }}
-                title="Leave this group"
-              >
-                👋 Leave Group
-              </button>
-            )
-          ) : (
-            // 1:1 chat: Any member can delete
-            <button
-              className="group-info__button group-info__button--danger"
-              onClick={() => {
-                onDeleteChat();
-                onClose();
-              }}
-              title="Delete chat"
-            >
-              🗑️ Delete Chat
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
   );
 };
 

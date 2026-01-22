@@ -280,7 +280,7 @@ const ChatWindow = ({ user, onBack }) => {
 
 
                     {/* ✅ Participants Toggle Button */}
-                    <button
+                    {/* <button
                         className="participants-button"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -289,21 +289,25 @@ const ChatWindow = ({ user, onBack }) => {
                         title="View group information"
                     >
                         ⋮
-                    </button>
-                    {/* 
-                    <button
+                    </button> */}
+
+                    {/* <button
                         className="participants-button"
                         onClick={() => setShowParticipants(!showParticipants)}
                     >
                         👥 {participants.length}
                     </button> */}
 
-                    {/* <button
+                    <button
                         className="invite-button"
-                        onClick={() => setShowInviteModal(true)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowInviteModal(true);
+                        }}
                     >
                         ✉️ Invite
-                    </button> */}
+                    </button>
+
                 </div>
             </div>
 

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import API from "../api/api";
-import GroupAvatarUpload from "./GroupAvatarUpload";
+import AvatarUpload from "./AvatarUpload";
+import GroupAvatarPicker from "./GroupAvatarPicker";
 import { setActiveChat, setChats, selectChats } from "../store/chatSlice";
 import "./removeUserModal.scss";
 
@@ -57,22 +58,22 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
 
             if (groupAvatarFile && newChat._id) {
                 console.log("📸 Step 2: Uploading avatar to chat:", newChat._id);
-                
+
                 const reader = new FileReader();
-                
+
                 reader.onload = async (e) => {
                     const base64Avatar = e.target.result;
                     console.log("📸 Avatar base64 length:", base64Avatar.length);
-                    
+
                     try {
                         const avatarResponse = await API.put(`/chats/${newChat._id}/avatar`, {
                             avatar: base64Avatar
                         });
 
                         console.log("✅ Avatar uploaded successfully");
-                        
+
                         let updatedChat = newChat;
-                        
+
                         if (avatarResponse.data?.chat) {
                             updatedChat = avatarResponse.data.chat;
                             console.log("📝 Chat from response:", updatedChat);
@@ -80,10 +81,10 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                             updatedChat = { ...newChat, avatar: base64Avatar };
                             console.log("📝 Using base64 as fallback");
                         }
-                        
+
                         console.log("🖼️ Chat avatar:", updatedChat.avatar);
                         dispatch(setActiveChat(updatedChat));
-                        
+
                         try {
                             const { data: allChats } = await API.get(`/chats/${user._id}`);
                             dispatch(setChats(allChats));
@@ -91,7 +92,7 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                         } catch (refreshErr) {
                             console.warn("Could not refresh chats");
                         }
-                        
+
                         onGroupCreated(updatedChat);
                     } catch (avatarErr) {
                         console.error("⚠️ Avatar upload error:", avatarErr.response?.data);
@@ -99,12 +100,12 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                         onGroupCreated(newChat);
                     }
                 };
-                
+
                 reader.onerror = () => {
                     console.error("⚠️ Error reading file");
                     onGroupCreated(newChat);
                 };
-                
+
                 reader.readAsDataURL(groupAvatarFile);
             } else {
                 onGroupCreated(newChat);
@@ -128,10 +129,9 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                 </div>
 
                 <div className="modal-body">
-                    <GroupAvatarUpload 
-                        groupName={groupName} 
-                        onAvatarSelect={handleAvatarSelect}
-                        previewAvatar={groupAvatarPreview}
+                    <GroupAvatarPicker
+                        preview={groupAvatarPreview}
+                        onSelect={handleAvatarSelect}
                     />
 
                     <label className="input-label">Group Name</label>
