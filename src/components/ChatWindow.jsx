@@ -35,6 +35,11 @@ const ChatWindow = ({ user, onBack }) => {
     const [notification, setNotification] = useState(null); // ✅ Notification state
     const messagesEndRef = useRef(null);
 
+    const [activeMessageId, setActiveMessageId] = useState(null);
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editText, setEditText] = useState("");
+
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
@@ -53,6 +58,51 @@ const ChatWindow = ({ user, onBack }) => {
             hour12: true,
         });
     };
+
+    const handleDeleteMessage = async (messageId) => {
+        if (!window.confirm("Delete this message?")) return;
+
+        try {
+            const { data } = await API.delete(`/messages/${messageId}`);
+
+            dispatch(
+                setMessages({
+                    chatId: activeChat._id,
+                    messages: messages.filter(m => m._id !== messageId),
+                })
+            );
+
+            showNotification(data.message || "Message deleted", "success");
+        } catch (err) {
+            showNotification("Failed to delete message", "error");
+        }
+    };
+
+    const handleEditMessage = async (messageId) => {
+        if (!editText.trim()) return;
+
+        try {
+            const { data } = await API.put(`/messages/${messageId}`, {
+                content: editText,
+            });
+
+            dispatch(
+                setMessages({
+                    chatId: activeChat._id,
+                    messages: messages.map(m =>
+                        m._id === messageId ? data : m
+                    ),
+                })
+            );
+
+            setEditingMessageId(null);
+            setEditText("");
+            showNotification("Message updated", "success");
+        } catch (err) {
+            showNotification("Failed to edit message", "error");
+        }
+    };
+
 
 
     // ✅ Detect mobile
@@ -375,22 +425,89 @@ const ChatWindow = ({ user, onBack }) => {
                         messages.map((m, i) => (
                             <div
                                 key={m._id || i}
-                                className={`message ${m.senderId === user._id ? "message-sent" : "message-received"
+                                className={`message ${m.senderId === user._id
+                                    ? "message-sent"
+                                    : "message-received"
                                     }`}
+                                onMouseLeave={() => setActiveMessageId(null)}
                             >
                                 <strong>
                                     {m.senderId === user._id ? "You" : m.senderName || "User"}
                                 </strong>
 
                                 <div className="message-content">
-                                    <span className="message-text">{m.content}</span>
-                                    <span className="message-time">
-                                        {formatTime(m.createdAt)}
-                                    </span>
+                                    {editingMessageId === m._id ? (
+                                        <div className="edit-box">
+                                            <input
+                                                value={editText}
+                                                onChange={(e) => setEditText(e.target.value)}
+                                                autoFocus
+                                            />
+                                            <button onClick={() => handleEditMessage(m._id)}>
+                                                Save
+                                            </button>
+                                            <button onClick={() => setEditingMessageId(null)}>
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="message-text">
+                                                {m.content}
+                                                {m.isEdited && (
+                                                    <em style={{ marginLeft: 6, fontSize: 12 }}>
+                                                        (edited)
+                                                    </em>
+                                                )}
+                                            </span>
+                                            <span className="message-time">
+                                                {formatTime(m.createdAt)}
+                                            </span>
+                                        </>
+                                    )}
+
+                                    {/* ✅ Actions only for sender */}
+                                    {m.senderId === user._id && editingMessageId !== m._id && (
+                                        <div className="message-actions">
+                                            <button
+                                                onClick={() =>
+                                                    setActiveMessageId(
+                                                        activeMessageId === m._id
+                                                            ? null
+                                                            : m._id
+                                                    )
+                                                }
+                                            >
+                                                ⋮
+                                            </button>
+
+                                            {activeMessageId === m._id && (
+                                                <div className="message-menu">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingMessageId(m._id);
+                                                            setEditText(m.content);
+                                                            setActiveMessageId(null);
+                                                        }}
+                                                    >
+                                                        ✏️ Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDeleteMessage(m._id)
+                                                        }
+                                                    >
+                                                        🗑 Delete
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
+
                     <div ref={messagesEndRef} />
                 </div>
             </div>
