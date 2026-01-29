@@ -15,6 +15,7 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
     const [groupAvatarPreview, setGroupAvatarPreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [groupDescription, setGroupDescription] = useState(""); // New state
 
     const handleAvatarSelect = (file, preview) => {
         setGroupAvatarFile(file);
@@ -46,12 +47,14 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
             const payload = {
                 chatName: groupName.trim(),
                 memberEmails: emails,
+                description: groupDescription.trim(), // Add this line
                 createdBy: user._id,
                 creatorEmail: user.email,
             };
 
             console.log("📤 Step 1: Creating group...", payload);
             const { data } = await API.post("/chats", payload);
+            console.log("✅ Group creation response:", data);
             const newChat = data.chat;
 
             console.log("✅ Group created:", newChat);
@@ -141,6 +144,16 @@ const CreateGroupModal = ({ user, onClose, onGroupCreated }) => {
                         value={groupName}
                         onChange={(e) => setGroupName(e.target.value)}
                         className="input-field"
+                    />
+
+                    {/* --- NEW FIELD: Group Description --- */}
+                    <label className="input-label">Group Description (Optional)</label>
+                    <textarea
+                        placeholder="What is this group about?"
+                        value={groupDescription}
+                        onChange={(e) => setGroupDescription(e.target.value)}
+                        className="input-field"
+                        style={{ minHeight: "60px", marginBottom: "15px" }}
                     />
 
                     <label className="input-label">Member Emails (comma-separated)</label>

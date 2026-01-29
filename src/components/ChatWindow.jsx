@@ -3,12 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import InviteUserModal from "./InviteUserModal";
 import RemoveUserModal from "./RemoveUserModal";
 import GroupInfo from "./GroupInfo";
+import MediaViewer from "./MediaViewer";
 import { io } from "socket.io-client";
 import API from "../api/api";
 import MessageInput from "./MessageInput";
 import {
     setMessages,
     addMessage,
+    updateMessage,
     selectMessages,
     selectActiveChat,
 } from "../store/chatSlice";
@@ -33,12 +35,25 @@ const ChatWindow = ({ user, onBack }) => {
     const [showGroupInfo, setShowGroupInfo] = useState(false);
     const [userToRemove, setUserToRemove] = useState(null);
     const [notification, setNotification] = useState(null); // ✅ Notification state
+    const [viewingMedia, setViewingMedia] = useState(null); // ✅ Media viewer state
     const messagesEndRef = useRef(null);
 
     const [activeMessageId, setActiveMessageId] = useState(null);
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editText, setEditText] = useState("");
 
+
+    // ✅ ADD THIS: Handler for media from MessageInput
+    const handleSendMedia = (mediaData) => {
+        if (!activeChat?._id) return;
+
+        socket.emit("uploadMedia", {
+            ...mediaData,
+            senderId: user._id,
+            senderName: user?.name || user?.username || "Unknown",
+            chatId: activeChat._id,
+        });
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -86,14 +101,11 @@ const ChatWindow = ({ user, onBack }) => {
                 content: editText,
             });
 
-            dispatch(
-                setMessages({
-                    chatId: activeChat._id,
-                    messages: messages.map(m =>
-                        m._id === messageId ? data : m
-                    ),
-                })
-            );
+            // Update local state for immediate reflection
+            dispatch(updateMessage({ chatId: activeChat._id, message: data }));
+
+            // Notify other clients via socket
+            socket.emit("messageEdited", data);
 
             setEditingMessageId(null);
             setEditText("");
@@ -113,13 +125,14 @@ const ChatWindow = ({ user, onBack }) => {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    // ✅ 1. Combined Effect for Joining, Loading, and Socket Listeners
     useEffect(() => {
         if (!activeChat?._id) return;
 
         // Join chat room
         socket.emit("joinChat", activeChat._id);
 
-        // Load messages
+        // Function to Load messages
         const loadMessages = async () => {
             try {
                 const { data } = await API.get(`/messages/${activeChat._id}`);
@@ -134,16 +147,15 @@ const ChatWindow = ({ user, onBack }) => {
             }
         };
 
-        // Load participants
+        // Function to Load participants
         const loadParticipants = async () => {
             try {
                 const { data } = await API.get(`/chats/chat/${activeChat._id}`);
                 const chatData = data;
                 setParticipants(chatData?.members || []);
 
-                // Also update Redux with the full chat data (including avatar)
                 if (chatData && chatData._id) {
-                    dispatch(setActiveChat(chatData));
+                    dispatch(selectActiveChat(chatData));
                 }
             } catch (err) {
                 console.error("❌ Failed to load participants:", err);
@@ -154,26 +166,38 @@ const ChatWindow = ({ user, onBack }) => {
         loadMessages();
         loadParticipants();
 
-        // ✅ Register socket listener ONLY ONCE
+        // ✅ Register socket listeners
         if (!socketListenerAdded.current) {
             socket.on("messageReceived", (message) => {
-                dispatch(
-                    addMessage({
-                        chatId: message.chatId,
-                        message,
-                    })
-                );
+                dispatch(addMessage({ chatId: message.chatId, message }));
+            });
+
+            // Handle message edits broadcast from server
+            socket.on("messageEdited", (editedMessage) => {
+                dispatch(updateMessage({ chatId: editedMessage.chatId, message: editedMessage }));
+            });
+
+            // Handle Media received via socket
+            socket.on("mediaReceived", (mediaMessage) => {
+                dispatch(addMessage({
+                    chatId: activeChat._id,
+                    message: mediaMessage
+                }));
             });
 
             socketListenerAdded.current = true;
         }
 
+        // Cleanup function
         return () => {
+            socket.off("messageReceived");
+            socket.off("mediaReceived");
+            socketListenerAdded.current = false;
             socket.emit("leaveChat", activeChat._id);
         };
-    }, [activeChat?._id, dispatch]);
+    }, [activeChat?._id, dispatch]); // Exactly one closing block here
 
-
+    // ✅ 2. Separate Effect for scrolling
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
@@ -425,10 +449,7 @@ const ChatWindow = ({ user, onBack }) => {
                         messages.map((m, i) => (
                             <div
                                 key={m._id || i}
-                                className={`message ${m.senderId === user._id
-                                    ? "message-sent"
-                                    : "message-received"
-                                    }`}
+                                className={`message ${m.senderId === user._id ? "message-sent" : "message-received"}`}
                                 onMouseLeave={() => setActiveMessageId(null)}
                             >
                                 <strong>
@@ -436,70 +457,82 @@ const ChatWindow = ({ user, onBack }) => {
                                 </strong>
 
                                 <div className="message-content">
-                                    {editingMessageId === m._id ? (
-                                        <div className="edit-box">
-                                            <input
-                                                value={editText}
-                                                onChange={(e) => setEditText(e.target.value)}
-                                                autoFocus
-                                            />
-                                            <button onClick={() => handleEditMessage(m._id)}>
-                                                Save
-                                            </button>
-                                            <button onClick={() => setEditingMessageId(null)}>
-                                                Cancel
-                                            </button>
+                                    {/* ✅ NEW: Check if the message is Media */}
+                                    {m.fileUrl ? (
+                                        <div className="media-content">
+                                            {m.fileType.startsWith("image/") ? (
+                                                <img
+                                                    src={`http://localhost:8080${m.fileUrl}`}
+                                                    alt="Shared media"
+                                                    style={{ maxWidth: '250px', borderRadius: '8px', cursor: 'pointer' }}
+                                                    onClick={() => setViewingMedia(m)}
+                                                    title="Click to view fullscreen"
+                                                />
+                                            ) : (
+                                                <video 
+                                                    style={{ maxWidth: '250px', cursor: 'pointer', borderRadius: '8px' }}
+                                                    onClick={() => setViewingMedia(m)}
+                                                    title="Click to view fullscreen"
+                                                >
+                                                    <source src={`http://localhost:8080${m.fileUrl}`} type={m.fileType} />
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                            )}
+                                            <span className="message-time">{formatTime(m.uploadedAt || m.createdAt)}</span>
                                         </div>
                                     ) : (
-                                        <>
-                                            <span className="message-text">
-                                                {m.content}
-                                                {m.isEdited && (
-                                                    <em style={{ marginLeft: 6, fontSize: 12 }}>
-                                                        (edited)
-                                                    </em>
-                                                )}
-                                            </span>
-                                            <span className="message-time">
-                                                {formatTime(m.createdAt)}
-                                            </span>
-                                        </>
+                                        /* 📝 Existing Text Rendering Logic */
+                                        editingMessageId === m._id ? (
+                                            <div className="edit-box">
+                                                <input value={editText} onChange={(e) => setEditText(e.target.value)} autoFocus />
+                                                <button onClick={() => handleEditMessage(m._id)}>Save</button>
+                                                <button onClick={() => setEditingMessageId(null)}>Cancel</button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span className="message-text">
+                                                    {m.content}
+                                                    {m.isEdited && <em style={{ marginLeft: 6, fontSize: 12 }}>(edited)</em>}
+                                                </span>
+                                                <span className="message-time">{formatTime(m.createdAt)}</span>
+                                            </>
+                                        )
                                     )}
 
-                                    {/* ✅ Actions only for sender */}
+                                    {/* Actions menu: allow delete for media or text; edit only for text */}
                                     {m.senderId === user._id && editingMessageId !== m._id && (
                                         <div className="message-actions">
-                                            <button
-                                                onClick={() =>
-                                                    setActiveMessageId(
-                                                        activeMessageId === m._id
-                                                            ? null
-                                                            : m._id
-                                                    )
-                                                }
-                                            >
-                                                ⋮
-                                            </button>
-
-                                            {activeMessageId === m._id && (
-                                                <div className="message-menu">
+                                            {!m.fileUrl && (
+                                                <>
                                                     <button
+                                                        className="message-action-btn"
                                                         onClick={() => {
                                                             setEditingMessageId(m._id);
-                                                            setEditText(m.content);
-                                                            setActiveMessageId(null);
+                                                            setEditText(m.content || "");
                                                         }}
                                                     >
-                                                        ✏️ Edit
+                                                        Edit
                                                     </button>
                                                     <button
-                                                        onClick={() =>
-                                                            handleDeleteMessage(m._id)
-                                                        }
+                                                        className="message-action-btn"
+                                                        onClick={() => handleDeleteMessage(m._id)}
                                                     >
-                                                        🗑 Delete
+                                                        Delete
                                                     </button>
-                                                </div>
+                                                </>
+                                            )}
+
+                                            {m.fileUrl && (
+                                                <button
+                                                    className="message-action-btn"
+                                                    onClick={() => {
+                                                        if (window.confirm("Delete this media for everyone?")) {
+                                                            handleDeleteMessage(m._id);
+                                                        }
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
                                             )}
                                         </div>
                                     )}
@@ -507,15 +540,17 @@ const ChatWindow = ({ user, onBack }) => {
                             </div>
                         ))
                     )}
-
                     <div ref={messagesEndRef} />
                 </div>
             </div>
 
 
-            {/* ✅ Message Input */}
+            {/* ✅ UPDATE: Pass handleSendMedia to MessageInput */}
             <div className="message-input-container">
-                <MessageInput onSend={sendMessage} />
+                <MessageInput
+                    onSend={sendMessage}
+                    onSendMedia={handleSendMedia}
+                />
             </div>
 
             {/* ✅ Notification Toast */}
@@ -541,6 +576,14 @@ const ChatWindow = ({ user, onBack }) => {
                 >
                     {notification.message}
                 </div>
+            )}
+
+            {/* ✅ Media Viewer Modal */}
+            {viewingMedia && (
+                <MediaViewer
+                    media={viewingMedia}
+                    onClose={() => setViewingMedia(null)}
+                />
             )}
 
             <style>{`

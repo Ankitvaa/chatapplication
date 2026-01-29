@@ -455,4 +455,14 @@
   .message-input-container form button {
     display: none;
   }
+
+  // Show attachment button on mobile
+  .message-input__attach-btn {
+    display: block !important;
+  }
+
+  // Keep send button hidden on mobile
+  .message-input__button {
+    display: none !important;
+  }
 }

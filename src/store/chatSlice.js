@@ -30,6 +30,14 @@ export const chatSlice = createSlice({
       }
       state.messages[chatId].push(message);
     },
+    updateMessage: (state, action) => {
+      const { chatId, message } = action.payload;
+      const list = state.messages[chatId] || [];
+      // Use JSON.stringify for ID comparison to handle different ID shapes (string, {$oid:...}, ObjectId)
+      state.messages[chatId] = list.map(m => (
+        JSON.stringify(m._id) === JSON.stringify(message._id) ? { ...m, ...message } : m
+      ));
+    },
     setMessages: (state, action) => {
       const { chatId, messages } = action.payload;
       state.messages[chatId] = messages;
@@ -47,7 +55,7 @@ export const chatSlice = createSlice({
   },
 });
 
-export const { setChats, setActiveChat, addMessage, setMessages, updateActiveChatAvatar } = chatSlice.actions;
+export const { setChats, setActiveChat, addMessage, updateMessage, setMessages, updateActiveChatAvatar } = chatSlice.actions;
 
 // Selectors
 export const selectChats = (state) => state.chat.chats;

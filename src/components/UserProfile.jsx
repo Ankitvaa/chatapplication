@@ -9,7 +9,7 @@ const UserProfile = () => {
   const dispatch = useDispatch();
   const user = useSelector(state => state.user.user);
   const [showProfileInfo, setShowProfileInfo] = useState(false);
-  console.log(user)
+  console.log("user", user);
 
   const handleLogout = () => {
     dispatch(logout());
